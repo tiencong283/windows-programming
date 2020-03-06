@@ -186,7 +186,6 @@ void CFileScannerDlg::browseForDir(BOOL recursive, CString root, CString dirPath
 
 	hFind = FindFirstFile(dirPath, &ffd);
 	if (hFind == INVALID_HANDLE_VALUE) {
-		MessageBox(_T("IO errors has occured"), _T("ERROR"), MB_ICONERROR | MB_OK);
 		return;
 	}
 
@@ -246,8 +245,10 @@ void CFileScannerDlg::browseForDir(BOOL recursive, CString root, CString dirPath
 		}
 
 		// file size
-		long int fileSize = (ffd.nFileSizeHigh * (MAXDWORD + 1)) + ffd.nFileSizeLow;
-		fmtSize.Format(_T("%ld KB"), fileSize / 1024);
+		__int64 fileSize = ffd.nFileSizeHigh << 32;
+		fileSize += ffd.nFileSizeLow;
+
+		fmtSize.Format(_T("%lld KB"), fileSize / 1024);
 
 		
 		fileList.InsertItem(item_i, root == "" ? fileName: root + "\\" + fileName);	// name
@@ -296,6 +297,10 @@ void CFileScannerDlg::OnBnClickedButtonFind()
 
 	// clean listing
 	fileList.DeleteAllItems();
+
+	if (dirPath.GetLength() > MAX_PATH || recursive) {	// permit an extended-length path for a maximum total path length of 32,767 characters
+		dirPath = _T("\\\\?\\") + dirPath;
+	}
 	browseForDir(recursive, _T(""), dirPath, fileSearchName, filtered, matchCase, matchWhole);
 }
 
