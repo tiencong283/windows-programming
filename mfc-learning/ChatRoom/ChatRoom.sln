@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChatRoomServer", "ChatRoomServer\ChatRoomServer.vcxproj", "{55743691-E5D9-4B32-BC46-6EA5356E446B}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSockServerPrac", "WinSocksPractice\WinSocksPractice.vcxproj", "{BDFC6B38-9CB9-4F22-80F5-6445ACECBADE}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WinSockClientPrac", "WinSockClientPrac\WinSockClientPrac.vcxproj", "{0E5B6C9D-6381-4391-AD0E-3D5F1B33C0B4}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ChatRoomClient", "ChatRoomClient\ChatRoomClient.vcxproj", "{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,8 +43,19 @@ Global
 		{0E5B6C9D-6381-4391-AD0E-3D5F1B33C0B4}.Release|x64.Build.0 = Release|x64
 		{0E5B6C9D-6381-4391-AD0E-3D5F1B33C0B4}.Release|x86.ActiveCfg = Release|Win32
 		{0E5B6C9D-6381-4391-AD0E-3D5F1B33C0B4}.Release|x86.Build.0 = Release|Win32
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Debug|x64.ActiveCfg = Debug|x64
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Debug|x64.Build.0 = Debug|x64
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Debug|x86.ActiveCfg = Debug|Win32
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Debug|x86.Build.0 = Debug|Win32
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Release|x64.ActiveCfg = Release|x64
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Release|x64.Build.0 = Release|x64
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Release|x86.ActiveCfg = Release|Win32
+		{5B8EF462-6E3E-4AFA-BFBF-0CC3BF917C80}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {71709E7F-A01B-4125-B904-A2596EBD028B}
 	EndGlobalSection
 EndGlobal

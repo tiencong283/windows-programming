@@ -12,43 +12,53 @@
 #define new DEBUG_NEW
 #endif
 
-// CAboutDlg dialog used for App About
+// logs dialog implementation
 
-class CAboutDlg : public CDialogEx
-{
-public:
-	CAboutDlg();
-
-// Dialog Data
-#ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_ABOUTBOX };
-#endif
-
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-// Implementation
-protected:
-	DECLARE_MESSAGE_MAP()
-public:
-};
-
-CAboutDlg::CAboutDlg() : CDialogEx(IDD_ABOUTBOX)
-{
+CLogDlg::CLogDlg() : CDialogEx(IDD_DIALOG_LOG){
 }
 
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
+void CLogDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT_LOG, logEdit);
+	DDX_Control(pDX, IDC_BUTTON_Clear, clearButton);
+	DDX_Control(pDX, IDC_BUTTON_Close, closeButton);
 }
 
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+void CLogDlg::appendMsg(wchar_t const* msg)
+{
+	CString buffer;
+	CTime ctime = CTime::GetCurrentTime();
+
+	// seek to the end
+	int len = logEdit.GetWindowTextLength();
+	logEdit.SetSel(len, len);	
+
+	// get current time
+	buffer = ctime.Format(L"[%m-%d-%Y %T] ");
+	buffer += msg;
+	buffer += L"\r\n";	// text lines in a multiline control are separated by '\r\n' character sequences
+
+	logEdit.ReplaceSel(buffer);
+}
+// clear all logs
+void CLogDlg::OnBnClickedButtonClear()
+{
+	logEdit.SetWindowText(L"");
+}
+// close log window, just hide it
+void CLogDlg::OnBnClickedButtonClose()
+{
+	ShowWindow(SW_HIDE);
+}
+
+BEGIN_MESSAGE_MAP(CLogDlg, CDialogEx)
+	ON_BN_CLICKED(IDC_BUTTON_Clear, &CLogDlg::OnBnClickedButtonClear)
+	ON_BN_CLICKED(IDC_BUTTON_Close, &CLogDlg::OnBnClickedButtonClose)
 END_MESSAGE_MAP()
 
 
 // CChatRoomServerDlg dialog
-
-
 
 CChatRoomServerDlg::CChatRoomServerDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(IDD_CHATROOMSERVER_DIALOG, pParent)
@@ -76,11 +86,11 @@ END_MESSAGE_MAP()
 BOOL CChatRoomServerDlg::initClientList() {
 	int headerSize = 3;
 	wchar_t* headers[] = {
-		_T("No."),
+		_T("Username"),
 		_T("IP Address"),
 		_T("Port"),
 	};
-	int sizes[] = { 80, 200, 80};
+	int sizes[] = { 240, 120, 80};
 
 	LVCOLUMN col;
 	col.mask = LVCF_FMT | LVCF_TEXT | LVCF_SUBITEM | LVCF_WIDTH;
@@ -97,16 +107,34 @@ BOOL CChatRoomServerDlg::initClientList() {
 	return TRUE;
 }
 
+void CChatRoomServerDlg::addClient(wchar_t const* username, wchar_t const* ip, int port)
+{
+	CString wUsername(username);
+	CString portStr;
+	portStr.Format(L"%d", port);
+
+	// insert at the head of list
+	clientList.InsertItem(0, wUsername);
+	clientList.SetItemText(0, 1, ip);
+	clientList.SetItemText(0, 2, portStr);
+}
+
+void CChatRoomServerDlg::removeClient(wchar_t const* username)
+{
+	LVFINDINFO fi = {};
+	fi.flags = LVFI_STRING;
+	fi.psz = username;
+
+	int found = clientList.FindItem(&fi);
+	if (found != -1) {
+		clientList.DeleteItem(found);
+	}
+}
+
 // CChatRoomServerDlg message handlers
 BOOL CChatRoomServerDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
-	// Add "About..." menu item to system menu.
-
-	// IDM_ABOUTBOX must be in the system command range.
-	ASSERT((IDM_ABOUTBOX & 0xFFF0) == IDM_ABOUTBOX);
-	ASSERT(IDM_ABOUTBOX < 0xF000);
 
 	CMenu* pSysMenu = GetSystemMenu(FALSE);
 	if (pSysMenu != NULL)
@@ -135,20 +163,17 @@ BOOL CChatRoomServerDlg::OnInitDialog()
 		return FALSE;
 	}
 
+	hLogDlg = new CLogDlg;
+	if (hLogDlg->Create(IDD_DIALOG_LOG)) {
+		return FALSE;
+	}
+
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
 void CChatRoomServerDlg::OnSysCommand(UINT nID, LPARAM lParam)
 {
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
-		CAboutDlg dlgAbout;
-		dlgAbout.DoModal();
-	}
-	else
-	{
 		CDialogEx::OnSysCommand(nID, lParam);
-	}
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -187,18 +212,20 @@ HCURSOR CChatRoomServerDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+extern HANDLE hSockEvent;
 void CChatRoomServerDlg::OnBnClickedButtonStart()
 {
 	int status = startButton.GetWindowTextLength();
 	int ret = 0;
-	
-	// disable first to avoid multiple instances
+	DWORD exitCode;
+
 	startButton.EnableWindow(FALSE);
 
 	if (status == wcslen(L"START")) {	// start listening
+		
 		hServerThread = CreateThread(NULL, 0, startServer, (LPVOID)this, 0, NULL);
 		if (hServerThread == NULL) {
-			MessageBox(L"Cannot start server", L"ERROR");
+			return;
 		}
 		else {
 			startButton.SetWindowText(L"STOP");
@@ -207,14 +234,32 @@ void CChatRoomServerDlg::OnBnClickedButtonStart()
 		return;
 	}
 
-	if (hServerThread != NULL && TerminateThread(hServerThread, NULL)) {
-			startButton.SetWindowText(L"START");
+	if (hServerThread != NULL && TerminateThread(hServerThread, NULL)) {	// terminate server
+		// kind of idiot// just workaround for fixing unclean resources due to TerminateThread
+		closesocket(sock);
+		startButton.SetWindowText(L"START");
+		clientList.DeleteAllItems();
+		hLogDlg->appendMsg(L"Stopped the server");
 	}
+	
 	startButton.EnableWindow(TRUE);
 }
 
-// logs button handler
+// Logs button handler
 void CChatRoomServerDlg::OnBnClickedMfcbuttonLogs()
 {
+	RECT mDlgRect = {};
+	RECT lDlgRect = {};
+	
+	if (hLogDlg->IsWindowVisible()) {	// hide it
+		hLogDlg->ShowWindow(SW_HIDE);
+	}
+	else {
+		// show the log window and reposition to the right of main dialog
+		GetWindowRect(&mDlgRect);
+		hLogDlg->GetWindowRect(&lDlgRect);
 
+		hLogDlg->MoveWindow(mDlgRect.right, mDlgRect.top, lDlgRect.right - lDlgRect.left, lDlgRect.bottom - lDlgRect.top);
+		hLogDlg->ShowWindow(SW_SHOW);
+	}
 }
